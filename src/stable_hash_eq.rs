@@ -1,18 +1,18 @@
-/// [Sealed] trait for types in [`std`] that are known to implement
+/// An unsafe trait for types that are known to implement
 /// `Hash` and `Eq` deterministically.
 ///
 /// Furthermore, if `T: Clone + StableHashEq`, then `T::clone` is
 /// deterministic too, in the sense that the behavior with regards
 /// to `Hash` and `Eq` methods stays consistent between both clones.
 ///
-/// _This trait is sealed and cannot be implemented outside of the `evmap` crate._
+/// _This trait is sealed and cannot be implemented outside of the `evmap` crate.
 ///
-/// [Sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed
-pub trait StableHashEq: Hash + Eq + sealed_hash_eq::Sealed {}
-
-mod sealed_hash_eq {
-    pub trait Sealed {}
-}
+/// # Safety
+/// WARNING: You must be *absolutely* sure the type meets the above rules and conditions.
+/// This is purely exposed so lnx can use it in places where it knows exactly what it's doing.
+///
+/// Use at your own risk.
+pub unsafe trait StableHashEq: Hash + Eq {}
 
 macro_rules! stable_hash_eq {
     ($(
@@ -36,9 +36,7 @@ macro_rules! stable_hash_eq {
         {$($where_bounds:tt)*}$({$($_t:tt)*})?)? $Type:ty,
     )*) => {
         $(
-            impl$(<$($a,)*$($T$(:?$Sized)?,)*>)? StableHashEq for $Type
-            $($($where_bounds)*)? {}
-            impl$(<$($a,)*$($T$(:?$Sized)?,)*>)? sealed_hash_eq::Sealed for $Type
+            unsafe impl$(<$($a,)*$($T$(:?$Sized)?,)*>)? StableHashEq for $Type
             $($($where_bounds)*)? {}
         )*
     };
